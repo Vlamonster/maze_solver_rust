@@ -1,28 +1,32 @@
 use crossterm::cursor::{Hide, MoveTo};
+use crossterm::style::Attribute::{NoUnderline, Underlined};
 use crossterm::style::Print;
 use crossterm::terminal::{Clear, ClearType};
-use crossterm::QueueableCommand;
-use itertools::Itertools;
+use crossterm::{ExecutableCommand, QueueableCommand};
 use std::collections::HashSet;
 use std::io::{Stdout, Write};
+
+#[derive(Copy, Clone)]
+pub enum Wall {
+    Horizontal,
+    Vertical,
+    None,
+}
 
 #[allow(unused)]
 pub struct Maze {
     rows: usize,
     columns: usize,
-    frame: Vec<Vec<char>>,
+    frame: Vec<Vec<Wall>>,
     edges: HashSet<((usize, usize), (usize, usize))>,
 }
 
 impl Maze {
-    pub fn new(rows: usize, columns: usize, buffer: String) -> Maze {
+    pub fn new(rows: usize, columns: usize, frame: Vec<Vec<Wall>>) -> Maze {
         Maze {
             rows,
             columns,
-            frame: buffer
-                .lines()
-                .map(|line| line.chars().collect_vec())
-                .collect_vec(),
+            frame,
             edges: HashSet::new(),
         }
     }
@@ -32,51 +36,50 @@ impl Maze {
         self.edges.insert((node_2, node_1));
     }
 
-    pub fn get_char(&self, column: usize, row: usize) -> char {
+    pub fn get_cell(&self, column: usize, row: usize) -> Wall {
         self.frame[row][column]
     }
 
-    pub fn set_char(&mut self, column: usize, row: usize, char: char) {
-        self.frame[row][column] = char;
+    pub fn set_cell(&mut self, column: usize, row: usize, cell: Wall) {
+        self.frame[row][column] = cell;
     }
 }
 
 /// Initializes walled maze in the terminal.
 pub fn init_maze(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
-    let mut buffer = String::new();
+    let mut buffer = Vec::new();
 
-    // Write top row to the buffer.
-    buffer.push_str("_ _");
-    for _ in 1..columns {
-        buffer.push_str("__");
-    }
-    buffer.push('\n');
+    // Create top row.
+    let top_row = vec![Wall::Horizontal; columns * 2 + 1];
 
-    // Write the middle rows to the buffer.
-    for _ in 0..rows - 1 {
-        buffer.push('│');
-        for _ in 0..columns {
-            buffer.push_str("_│");
-        }
-        buffer.push('\n');
+    // Create template for general row.
+    let mut row = vec![Wall::Vertical];
+    for _ in 0..columns {
+        row.push(Wall::Horizontal);
+        row.push(Wall::Vertical);
     }
 
-    // Write bottom row to the buffer.
-    buffer.push('│');
-    for _ in 0..columns - 1 {
-        buffer.push_str("_│");
+    // Create frame.
+    buffer.push(top_row);
+    for _ in 0..rows {
+        buffer.push(row.clone());
     }
-    buffer.push_str(" |\n");
+
+    // Create openings.
+    buffer[0][1] = Wall::None;
+    buffer[rows][columns * 2 - 1] = Wall::None;
 
     // Setup terminal for drawing the maze.
     stdout.queue(Hide).unwrap();
     stdout.queue(MoveTo(0, 0)).unwrap();
     stdout.queue(Clear(ClearType::All)).unwrap();
 
-    // Queue the lines to be drawn to the terminal.
-    for line in buffer.lines() {
+    // Draw frame
+    for line in &buffer {
         stdout.queue(Clear(ClearType::UntilNewLine)).unwrap();
-        stdout.queue(Print(line)).unwrap();
+        for &cell in line {
+            print_cell(stdout, cell, ' ');
+        }
         stdout.queue(Print('\n')).unwrap();
     }
 
@@ -84,4 +87,15 @@ pub fn init_maze(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
     stdout.flush().unwrap();
 
     Maze::new(rows, columns, buffer)
+}
+
+/// Print cell type with given character at current cursor position.
+pub fn print_cell(stdout: &mut Stdout, cell: Wall, char: char) {
+    match cell {
+        Wall::Horizontal => stdout
+            .execute(Print(format!("{}{}{}", Underlined, char, NoUnderline)))
+            .unwrap(),
+        Wall::Vertical => stdout.execute(Print('│')).unwrap(),
+        Wall::None => stdout.execute(Print(char)).unwrap(),
+    };
 }

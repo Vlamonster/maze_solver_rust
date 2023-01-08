@@ -1,8 +1,6 @@
-use crate::maze::{init_maze, Maze};
+use crate::maze::{init_maze, print_cell, Maze, Wall};
 use crossterm::cursor::MoveTo;
-use crossterm::style::Attribute::{NoUnderline, Underlined};
-use crossterm::style::Print;
-use crossterm::{ExecutableCommand, QueueableCommand};
+use crossterm::QueueableCommand;
 use rand::seq::SliceRandom;
 use spin_sleep::sleep;
 use std::collections::HashSet;
@@ -33,6 +31,9 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
         // Randomize order of directions to try.
         offsets.shuffle(&mut rng);
 
+        // Calculate cell indices.
+        let (cx, cy) = (2 * x + 1, y + 1);
+
         // Check per neighbor if we have visited it.
         for (dx, dy) in offsets {
             let (nx, ny) = ((x as isize + dx) as usize, (y as isize + dy) as usize);
@@ -61,11 +62,11 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
 
             // If we moved horizontally, replace wall with '_', otherwise replace with ' '.
             if dx != 0 {
-                stdout.execute(Print('_')).unwrap();
-                maze.set_char(wx, wy, '_')
+                print_cell(stdout, Wall::Horizontal, ' ');
+                maze.set_cell(wx, wy, Wall::Horizontal)
             } else {
-                stdout.execute(Print(' ')).unwrap();
-                maze.set_char(wx, wy, ' ')
+                print_cell(stdout, Wall::None, ' ');
+                maze.set_cell(wx, wy, Wall::None)
             }
 
             let dir = match (dx, dy) {
@@ -76,16 +77,8 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
                 (_, _) => unreachable!(),
             };
 
-            stdout
-                .queue(MoveTo(2 * x as u16 + 1, y as u16 + 1))
-                .unwrap();
-            if maze.get_char(2 * x + 1, y + 1) == '_' {
-                stdout
-                    .execute(Print(format!("{}{}{}", Underlined, dir, NoUnderline)))
-                    .unwrap();
-            } else {
-                stdout.execute(Print(dir)).unwrap();
-            }
+            stdout.queue(MoveTo(cx as u16, cy as u16)).unwrap();
+            print_cell(stdout, maze.get_cell(2 * x + 1, y + 1), dir);
 
             // Continue with the top of the stack.
             continue 'top;
@@ -94,12 +87,8 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
         // No more neighbors to visit at this node, so pop it.
         unvisited.pop();
 
-        stdout
-            .queue(MoveTo(2 * x as u16 + 1, y as u16 + 1))
-            .unwrap();
-        stdout
-            .execute(Print(maze.get_char(2 * x + 1, y + 1)))
-            .unwrap();
+        stdout.queue(MoveTo(cx as u16, cy as u16)).unwrap();
+        print_cell(stdout, maze.get_cell(2 * x + 1, y + 1), ' ');
     }
 
     // Set cursor after the maze.
