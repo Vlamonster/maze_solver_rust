@@ -4,19 +4,22 @@ use crossterm::terminal::{Clear, ClearType};
 use crossterm::QueueableCommand;
 use std::collections::HashSet;
 use std::io::{Stdout, Write};
+use itertools::Itertools;
 
 #[allow(unused)]
 pub struct Maze {
     rows: usize,
     columns: usize,
+    frame: Vec<Vec<char>>,
     edges: HashSet<((usize, usize), (usize, usize))>,
 }
 
 impl Maze {
-    pub fn new(rows: usize, columns: usize) -> Maze {
+    pub fn new(rows: usize, columns: usize, buffer: String) -> Maze {
         Maze {
             rows,
             columns,
+            frame: buffer.lines().map(|line| line.chars().collect_vec()).collect_vec(),
             edges: HashSet::new(),
         }
     }
@@ -25,27 +28,42 @@ impl Maze {
         self.edges.insert((node_1, node_2));
         self.edges.insert((node_2, node_1));
     }
+
+    pub fn get_char(&self, column: usize, row: usize) -> char {
+        self.frame[row][column]
+    }
+
+    pub fn set_char(&mut self, column: usize, row: usize, char: char) {
+        self.frame[row][column] = char;
+    }
 }
 
 /// Initializes walled maze in the terminal.
-pub fn init_maze(stdout: &mut Stdout, rows: usize, columns: usize) {
+pub fn init_maze(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
     let mut buffer = String::new();
 
     // Write top row to the buffer.
-    buffer.push('_');
-    for _ in 0..columns {
+    buffer.push_str("_ _");
+    for _ in 1..columns {
         buffer.push_str("__");
     }
     buffer.push('\n');
 
-    // Write the of the rows to the buffer.
-    for _ in 0..rows {
+    // Write the middle rows to the buffer.
+    for _ in 0..rows - 1 {
         buffer.push('│');
         for _ in 0..columns {
             buffer.push_str("_│");
         }
         buffer.push('\n');
     }
+
+    // Write bottom row to the buffer.
+    buffer.push('│');
+    for _ in 0..columns-1 {
+        buffer.push_str("_│");
+    }
+    buffer.push_str( " |\n");
 
     // Setup terminal for drawing the maze.
     stdout.queue(Hide).unwrap();
@@ -61,4 +79,6 @@ pub fn init_maze(stdout: &mut Stdout, rows: usize, columns: usize) {
 
     // Flush to make sure the maze is drawn.
     stdout.flush().unwrap();
+
+    Maze::new(rows, columns, buffer)
 }

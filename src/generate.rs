@@ -1,6 +1,6 @@
 use crate::maze::{init_maze, Maze};
-use crossterm::cursor::MoveTo;
-use crossterm::style::Print;
+use crossterm::cursor::{MoveLeft, MoveTo};
+use crossterm::style::{Color, Print, SetBackgroundColor};
 use crossterm::{ExecutableCommand, QueueableCommand};
 use rand::seq::SliceRandom;
 use spin_sleep::sleep;
@@ -10,11 +10,8 @@ use std::time::Duration;
 
 /// Randomizes an initialized maze in the terminal.
 pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Maze {
-    // Draw a walled maze in the terminal.
-    init_maze(stdout, rows, columns);
-
-    // Initialize a maze without edges.
-    let mut maze = Maze::new(rows, columns);
+    // Initialize walled maze without edges.
+    let mut maze = init_maze(stdout, rows, columns);
 
     // Initialize depth first search.
     let mut visited = HashSet::new();
@@ -27,7 +24,16 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
 
     // Check if top of stack has unvisited neighbors.
     'top: while let Some(&(x, y)) = unvisited.last() {
+        let char = maze.get_char(2 * x + 1, y + 1);
+        stdout.queue(SetBackgroundColor(Color::Red)).unwrap();
+        stdout.queue(MoveTo(2 * x as u16 + 1, y as u16 + 1)).unwrap();
+        stdout.execute(Print(char)).unwrap();
+
         sleep(Duration::from_millis(delay));
+
+        stdout.queue(SetBackgroundColor(Color::Reset)).unwrap();
+        stdout.queue(MoveLeft(1)).unwrap();
+        stdout.execute(Print(char)).unwrap();
 
         // Set current node as visited.
         visited.insert((x, y));
@@ -57,15 +63,17 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
             unvisited.push((nx, ny));
 
             // Set cursor to wall between current node and neighbor.
-            let wx = (x + nx + 1) as u16;
-            let wy = if dy == -1 { ny } else { y } as u16 + 1;
-            stdout.queue(MoveTo(wx, wy)).unwrap();
+            let wx = x + nx + 1;
+            let wy = if dy == -1 { ny } else { y } + 1;
+            stdout.queue(MoveTo(wx as u16, wy as u16)).unwrap();
 
             // If we moved horizontally, replace wall with '_', otherwise replace with ' '.
             if dx != 0 {
                 stdout.execute(Print('_')).unwrap();
+                maze.set_char(wx, wy, '_')
             } else {
                 stdout.execute(Print(' ')).unwrap();
+                maze.set_char(wx, wy, ' ')
             }
 
             // Continue with the top of the stack.
