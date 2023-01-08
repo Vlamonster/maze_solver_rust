@@ -69,12 +69,13 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
                 maze.set_cell(wx, wy, Wall::None)
             }
 
+            #[rustfmt::skip]
             let dir = match (dx, dy) {
-                (1, _) => '→',
-                (-1, _) => '←',
-                (_, 1) => '↓',
-                (_, -1) => '↑',
-                (_, _) => unreachable!(),
+                ( 1,  _) => '→',
+                (-1,  _) => '←',
+                ( _,  1) => '↓',
+                ( _, -1) => '↑',
+                ( _,  _) => unreachable!(),
             };
 
             // Draw arrow.

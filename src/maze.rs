@@ -6,6 +6,10 @@ use crossterm::{ExecutableCommand, QueueableCommand};
 use std::collections::HashSet;
 use std::io::{Stdout, Write};
 
+// Walls come in three types:
+// Horizontal (H), which is represented by an underlined space.
+// Vertical (V), which is represented by a vertical line.
+// None (N), which is represented by a space.
 #[derive(Copy, Clone)]
 pub enum Wall {
     Horizontal,
@@ -13,6 +17,18 @@ pub enum Wall {
     None,
 }
 
+// The Maze struct stores the frame as a matrix of Walls.
+// For example the following 3 by 3 maze
+// _ _____
+// │____ │
+// │ _ │ │
+// │_│__ │
+//
+// is represented by
+// [[H, N, H, H, H, H, H],
+//  [V, H, H, H, H, N, V],
+//  [V, N, H, N, V, N, V],
+//  [V, H, V, H, H, N, V]]
 #[allow(unused)]
 pub struct Maze {
     rows: usize,
@@ -49,10 +65,8 @@ impl Maze {
 pub fn init_maze(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
     let mut buffer = Vec::new();
 
-    // Create top row.
     let top_row = vec![Wall::Horizontal; columns * 2 + 1];
 
-    // Create template for general row.
     let mut row = vec![Wall::Vertical];
     for _ in 0..columns {
         row.push(Wall::Horizontal);
@@ -67,14 +81,14 @@ pub fn init_maze(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
 
     // Create openings.
     buffer[0][1] = Wall::None;
-    buffer[rows][columns * 2 - 1] = Wall::None;
+    buffer[rows][columns * 2 - 1] = Wall::None; // (rows, columns * 2 - 1) is lower right cell
 
     // Setup terminal for drawing the maze.
     stdout.queue(Hide).unwrap();
     stdout.queue(MoveTo(0, 0)).unwrap();
     stdout.queue(Clear(ClearType::All)).unwrap();
 
-    // Draw frame
+    // Draw frame.
     for line in &buffer {
         stdout.queue(Clear(ClearType::UntilNewLine)).unwrap();
         for &cell in line {
