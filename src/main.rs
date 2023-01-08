@@ -4,6 +4,8 @@ mod maze;
 use crate::generate::generate_maze;
 use clap::Parser;
 use std::io::stdout;
+use crossterm::cursor::Show;
+use crossterm::ExecutableCommand;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -23,4 +25,5 @@ fn main() {
     let args = Args::parse();
     let mut stdout = stdout();
     let _maze = generate_maze(&mut stdout, args.rows, args.columns, args.delay);
+    stdout.execute(Show).unwrap();
 }
