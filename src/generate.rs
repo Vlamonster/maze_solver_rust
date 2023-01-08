@@ -77,8 +77,9 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
                 (_, _) => unreachable!(),
             };
 
+            // Draw arrow.
             stdout.queue(MoveTo(cx as u16, cy as u16)).unwrap();
-            print_cell(stdout, maze.get_cell(2 * x + 1, y + 1), dir);
+            print_cell(stdout, maze.get_cell(cx, cy), dir);
 
             // Continue with the top of the stack.
             continue 'top;
@@ -87,8 +88,9 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
         // No more neighbors to visit at this node, so pop it.
         unvisited.pop();
 
+        // Remove arrow.
         stdout.queue(MoveTo(cx as u16, cy as u16)).unwrap();
-        print_cell(stdout, maze.get_cell(2 * x + 1, y + 1), ' ');
+        print_cell(stdout, maze.get_cell(cx, cy), ' ');
     }
 
     // Set cursor after the maze.
