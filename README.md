@@ -12,3 +12,5 @@ cargo run --release -- 16 48 -d 0
 ```
 
 I tested that this works on at least Windows 10, Ubuntu and macOS.
+
+![](example.gif)
