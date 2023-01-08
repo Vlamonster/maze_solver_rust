@@ -2,9 +2,9 @@ use crossterm::cursor::{Hide, MoveTo};
 use crossterm::style::Print;
 use crossterm::terminal::{Clear, ClearType};
 use crossterm::QueueableCommand;
+use itertools::Itertools;
 use std::collections::HashSet;
 use std::io::{Stdout, Write};
-use itertools::Itertools;
 
 #[allow(unused)]
 pub struct Maze {
@@ -19,7 +19,10 @@ impl Maze {
         Maze {
             rows,
             columns,
-            frame: buffer.lines().map(|line| line.chars().collect_vec()).collect_vec(),
+            frame: buffer
+                .lines()
+                .map(|line| line.chars().collect_vec())
+                .collect_vec(),
             edges: HashSet::new(),
         }
     }
@@ -60,10 +63,10 @@ pub fn init_maze(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
 
     // Write bottom row to the buffer.
     buffer.push('│');
-    for _ in 0..columns-1 {
+    for _ in 0..columns - 1 {
         buffer.push_str("_│");
     }
-    buffer.push_str( " |\n");
+    buffer.push_str(" |\n");
 
     // Setup terminal for drawing the maze.
     stdout.queue(Hide).unwrap();

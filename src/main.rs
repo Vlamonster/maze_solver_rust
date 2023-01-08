@@ -3,9 +3,9 @@ mod maze;
 
 use crate::generate::generate_maze;
 use clap::Parser;
-use std::io::stdout;
 use crossterm::cursor::Show;
 use crossterm::ExecutableCommand;
+use std::io::stdout;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

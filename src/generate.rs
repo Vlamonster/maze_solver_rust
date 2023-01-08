@@ -1,6 +1,7 @@
 use crate::maze::{init_maze, Maze};
-use crossterm::cursor::{MoveLeft, MoveTo};
-use crossterm::style::{Color, Print, SetBackgroundColor};
+use crossterm::cursor::MoveTo;
+use crossterm::style::Attribute::{NoUnderline, Underlined};
+use crossterm::style::Print;
 use crossterm::{ExecutableCommand, QueueableCommand};
 use rand::seq::SliceRandom;
 use spin_sleep::sleep;
@@ -24,16 +25,7 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
 
     // Check if top of stack has unvisited neighbors.
     'top: while let Some(&(x, y)) = unvisited.last() {
-        let char = maze.get_char(2 * x + 1, y + 1);
-        stdout.queue(SetBackgroundColor(Color::Red)).unwrap();
-        stdout.queue(MoveTo(2 * x as u16 + 1, y as u16 + 1)).unwrap();
-        stdout.execute(Print(char)).unwrap();
-
         sleep(Duration::from_millis(delay));
-
-        stdout.queue(SetBackgroundColor(Color::Reset)).unwrap();
-        stdout.queue(MoveLeft(1)).unwrap();
-        stdout.execute(Print(char)).unwrap();
 
         // Set current node as visited.
         visited.insert((x, y));
@@ -76,12 +68,38 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
                 maze.set_char(wx, wy, ' ')
             }
 
+            let dir = match (dx, dy) {
+                (1, _) => '→',
+                (-1, _) => '←',
+                (_, 1) => '↓',
+                (_, -1) => '↑',
+                (_, _) => unreachable!(),
+            };
+
+            stdout
+                .queue(MoveTo(2 * x as u16 + 1, y as u16 + 1))
+                .unwrap();
+            if maze.get_char(2 * x + 1, y + 1) == '_' {
+                stdout
+                    .execute(Print(format!("{}{}{}", Underlined, dir, NoUnderline)))
+                    .unwrap();
+            } else {
+                stdout.execute(Print(dir)).unwrap();
+            }
+
             // Continue with the top of the stack.
             continue 'top;
         }
 
         // No more neighbors to visit at this node, so pop it.
         unvisited.pop();
+
+        stdout
+            .queue(MoveTo(2 * x as u16 + 1, y as u16 + 1))
+            .unwrap();
+        stdout
+            .execute(Print(maze.get_char(2 * x + 1, y + 1)))
+            .unwrap();
     }
 
     // Set cursor after the maze.
