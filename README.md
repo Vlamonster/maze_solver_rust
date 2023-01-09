@@ -7,9 +7,10 @@ Arguments:
   <COLUMNS>  Number of columns to draw
 
 Options:
-  -d, --delay <DELAY>  Number of milliseconds between animation [default: 25]
-  -h, --help           Print help information
-  -V, --version        Print version information
+  -g, --generator <GENERATOR>  Generator used [default: depth_first_search] [possible values: depth_first_search, breadth_first_search]
+  -d, --delay <DELAY>          Number of milliseconds between animation [default: 25]
+  -h, --help                   Print help information
+  -V, --version                Print version information
 ```
 Here are some examples:
 ```
@@ -20,8 +21,10 @@ cargo run --release -- 16 48
 cargo run --release -- 16 48 -d 0
 ```
 I tested that this works on at least Windows 10, Ubuntu and macOS.
+<details><summary>Example</summary>
 
 ![](example.gif)
+</details>
 
 # Note on Design
 It was important to me that large mazes could be drawn in a limited space, which meant that some thought had to be given

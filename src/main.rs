@@ -1,7 +1,7 @@
-mod generate;
+mod generator;
 mod maze;
 
-use crate::generate::generate_maze;
+use crate::generator::{breadth_first_search, depth_first_search};
 use clap::Parser;
 use crossterm::cursor::Show;
 use crossterm::ExecutableCommand;
@@ -16,6 +16,10 @@ struct Args {
     /// Number of columns to draw.
     columns: usize,
 
+    /// Generator used.
+    #[arg(short, long, default_value = "depth_first_search", value_parser = ["depth_first_search", "breadth_first_search"])]
+    generator: String,
+
     /// Number of milliseconds between animation.
     #[arg(short, long, default_value_t = 25)]
     delay: u64,
@@ -24,6 +28,16 @@ struct Args {
 fn main() {
     let args = Args::parse();
     let mut stdout = stdout();
-    let _maze = generate_maze(&mut stdout, args.rows, args.columns, args.delay);
+
+    match args.generator.as_str() {
+        "depth_first_search" => {
+            depth_first_search::generate_maze(&mut stdout, args.rows, args.columns, args.delay);
+        }
+        "breadth_first_search" => {
+            breadth_first_search::generate_maze(&mut stdout, args.rows, args.columns, args.delay);
+        }
+        _ => unreachable!(),
+    }
+
     stdout.execute(Show).unwrap();
 }
