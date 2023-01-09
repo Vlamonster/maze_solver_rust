@@ -29,15 +29,21 @@ fn main() {
     let args = Args::parse();
     let mut stdout = stdout();
 
-    match args.generator.as_str() {
-        "depth_first_search" => {
-            depth_first_search::generate_maze(&mut stdout, args.rows, args.columns, args.delay);
+    match (args.generator.as_str(), args.delay) {
+        ("depth_first_search", 0) => {
+            depth_first_search::generate_instant(&mut stdout, args.rows, args.columns);
         }
-        "breadth_first_search" => {
-            breadth_first_search::generate_maze(&mut stdout, args.rows, args.columns, args.delay);
+        ("depth_first_search", delay) => {
+            depth_first_search::generate(&mut stdout, args.rows, args.columns, delay);
         }
-        "kruskal" => {
-            kruskal::generate_maze(&mut stdout, args.rows, args.columns, args.delay);
+        ("breadth_first_search", 0) => {
+            breadth_first_search::generate_instant(&mut stdout, args.rows, args.columns);
+        }
+        ("breadth_first_search", delay) => {
+            breadth_first_search::generate(&mut stdout, args.rows, args.columns, delay);
+        }
+        ("kruskal", delay) => {
+            kruskal::generate(&mut stdout, args.rows, args.columns, delay);
         }
         _ => unreachable!(),
     }

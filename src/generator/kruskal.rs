@@ -1,4 +1,4 @@
-use crate::maze::{init_maze, print_cell, Maze, Wall};
+use crate::maze::{Maze, Wall};
 use crossterm::cursor::MoveTo;
 use crossterm::QueueableCommand;
 use itertools::Itertools;
@@ -7,10 +7,9 @@ use spin_sleep::sleep;
 use std::io::Stdout;
 use std::time::Duration;
 
-/// Randomizes an initialized maze in the terminal.
-pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Maze {
-    // Initialize walled maze without edges.
-    let mut maze = init_maze(stdout, rows, columns);
+pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Maze {
+    let maze = Maze::new_walled(rows, columns);
+    maze.print(stdout);
 
     // Initialize kruskal algorithm.
     let mut ids = (0..columns)
@@ -39,7 +38,7 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
             node_2 = ((wx + 1 - 1) / 2, wy - 1); // Node right of wall.
         } else {
             // Horizontal wall.
-            wall = Wall::Horizontal;
+            wall = Wall::Horizontal(' ');
             node_1 = ((wx - 1) / 2, wy - 1); // Node above wall.
             node_2 = ((wx - 1) / 2, wy + 1 - 1); // Node below wall.
         }
@@ -52,10 +51,6 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
             continue;
         }
 
-        // Store new edge.
-        maze.insert_edge(node_1, node_2);
-        maze.insert_edge(node_2, node_1);
-
         for id in ids.iter_mut() {
             if *id == id_1 {
                 *id = id_2;
@@ -65,8 +60,8 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
         // Set cursor to wall and open it.
         stdout.queue(MoveTo(wx as u16, wy as u16)).unwrap();
         match wall {
-            Wall::Horizontal => print_cell(stdout, Wall::None, ' '),
-            Wall::Vertical => print_cell(stdout, Wall::Horizontal, ' '),
+            Wall::Horizontal(_) => Wall::None(' ').print(stdout),
+            Wall::Vertical => Wall::Horizontal(' ').print(stdout),
             _ => unreachable!(),
         }
     }
