@@ -15,14 +15,14 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
     // Initialize breadth first search.
     let mut visited = HashSet::new();
     let mut unvisited = Vec::new();
-    let mut rng = rand::thread_rng();
     unvisited.push((0, 0));
 
     // Directions to try for neighbors.
-    let offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+    let mut offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+    let mut rng = rand::thread_rng();
 
     // Loop while we have unvisited nodes.
-    while let Some((x, y)) = unvisited.pop() {
+    'top: while let Some(&(x, y)) = unvisited.last() {
         // Calculate cell indices.
         let (cx, cy) = (2 * x + 1, y + 1);
 
@@ -31,6 +31,9 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
         print_cell(stdout, maze.get_cell(cx, cy), ' ');
 
         sleep(Duration::from_millis(delay));
+
+        // Randomize order of directions to try.
+        offsets.shuffle(&mut rng);
 
         // Set current node as visited.
         visited.insert((x, y));
@@ -75,10 +78,14 @@ pub fn generate_maze(stdout: &mut Stdout, rows: usize, columns: usize, delay: u6
                 .queue(MoveTo(2 * nx as u16 + 1, ny as u16 + 1))
                 .unwrap();
             print_cell(stdout, maze.get_cell(2 * nx + 1, ny + 1), '·');
+
+            // Randomize order of unvisited nodes and continue with the new top node.
+            unvisited.shuffle(&mut rng);
+            continue 'top;
         }
 
-        // Randomize order of unvisited nodes and continue with the new top node.
-        unvisited.shuffle(&mut rng);
+        // No more neighbors to visit at this node, so pop it.
+        unvisited.pop();
     }
 
     // Set cursor after the maze.
