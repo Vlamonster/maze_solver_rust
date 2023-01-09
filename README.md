@@ -1,15 +1,15 @@
 # How to Run
 ```
-Usage: maze_solver.exe [OPTIONS] <ROWS> <COLUMNS>
-
-Arguments:
-  <ROWS>     Number of rows to draw
-  <COLUMNS>  Number of columns to draw
-
-Options:
-  -g, --generator <GENERATOR>  Generator used [default: depth_first_search] [possible values: depth_first_search, breadth_first_search]
-  -d, --delay <DELAY>          Number of milliseconds between animation [default: 25]
-  -h, --help                   Print help information
+Usage: maze_solver.exe [OPTIONS] <ROWS> <COLUMNS>                                                                                               
+                                                                                                                                                
+Arguments:                                                                                                                                      
+  <ROWS>     Number of rows to draw                                                                                                             
+  <COLUMNS>  Number of columns to draw                                                                                                          
+                                                                                                                                                
+Options:                                                                                                                                        
+  -g, --generator <GENERATOR>  Generator used [default: depth_first_search] [possible values: depth_first_search, breadth_first_search, kruskal]
+  -d, --delay <DELAY>          Number of milliseconds between animation [default: 25]                                                           
+  -h, --help                   Print help information                                                                                           
   -V, --version                Print version information
 ```
 Here are some examples:
@@ -25,6 +25,12 @@ I tested that this works on at least Windows 10, Ubuntu and macOS.
 
 ![](example.gif)
 </details>
+
+# Generators
+The following generators are included:
+* Randomized depth-first search.
+* Randomized breadth-first search.
+* Kruskal's algorithm.
 
 # Note on Design
 It was important to me that large mazes could be drawn in a limited space, which meant that some thought had to be given

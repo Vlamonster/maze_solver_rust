@@ -10,7 +10,7 @@ use std::io::{Stdout, Write};
 // Horizontal (H), which is represented by an underlined space.
 // Vertical (V), which is represented by a vertical line.
 // None (N), which is represented by a space.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Wall {
     Horizontal,
     Vertical,

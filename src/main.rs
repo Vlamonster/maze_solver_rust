@@ -1,7 +1,7 @@
 mod generator;
 mod maze;
 
-use crate::generator::{breadth_first_search, depth_first_search};
+use crate::generator::{breadth_first_search, depth_first_search, kruskal};
 use clap::Parser;
 use crossterm::cursor::Show;
 use crossterm::ExecutableCommand;
@@ -17,7 +17,7 @@ struct Args {
     columns: usize,
 
     /// Generator used.
-    #[arg(short, long, default_value = "depth_first_search", value_parser = ["depth_first_search", "breadth_first_search"])]
+    #[arg(short, long, default_value = "depth_first_search", value_parser = ["depth_first_search", "breadth_first_search", "kruskal"])]
     generator: String,
 
     /// Number of milliseconds between animation.
@@ -35,6 +35,9 @@ fn main() {
         }
         "breadth_first_search" => {
             breadth_first_search::generate_maze(&mut stdout, args.rows, args.columns, args.delay);
+        }
+        "kruskal" => {
+            kruskal::generate_maze(&mut stdout, args.rows, args.columns, args.delay);
         }
         _ => unreachable!(),
     }
