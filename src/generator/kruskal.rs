@@ -1,6 +1,7 @@
 use crate::maze::{Maze, Wall};
 use crossterm::cursor::MoveTo;
 use crossterm::QueueableCommand;
+use disjoint_sets::UnionFind;
 use itertools::Itertools;
 use rand::seq::SliceRandom;
 use spin_sleep::sleep;
@@ -9,13 +10,11 @@ use std::time::Duration;
 
 pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Maze {
     let maze = Maze::new_walled(rows, columns);
+
     maze.print(stdout);
 
     // Initialize kruskal algorithm.
-    let mut ids = (0..columns)
-        .cartesian_product(0..rows)
-        .map(|(x, y)| y * columns + x)
-        .collect_vec();
+    let mut cells = UnionFind::new(columns * rows);
 
     // Construct vector of all walls and randomize the order.
     let horizontal_walls = (1..2 * columns).step_by(2).cartesian_product(1..rows);
@@ -32,30 +31,24 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
         let wall;
 
         if wx % 2 == 0 {
-            // Vertical wall.
             wall = Wall::Vertical;
             node_1 = ((wx - 1 - 1) / 2, wy - 1); // Node left of wall.
             node_2 = ((wx + 1 - 1) / 2, wy - 1); // Node right of wall.
         } else {
-            // Horizontal wall.
             wall = Wall::Horizontal(' ');
             node_1 = ((wx - 1) / 2, wy - 1); // Node above wall.
             node_2 = ((wx - 1) / 2, wy + 1 - 1); // Node below wall.
         }
 
-        let id_1 = ids[node_1.1 * columns + node_1.0];
-        let id_2 = ids[node_2.1 * columns + node_2.0];
+        // Reduce nodes to unique identifiers.
+        let id1 = node_1.1 * columns + node_1.0;
+        let id2 = node_2.1 * columns + node_2.0;
 
-        // If cells have same id continue.
-        if id_1 == id_2 {
+        if cells.equiv(id1, id2) {
             continue;
         }
 
-        for id in ids.iter_mut() {
-            if *id == id_1 {
-                *id = id_2;
-            }
-        }
+        cells.union(id1, id2);
 
         // Set cursor to wall and open it.
         stdout.queue(MoveTo(wx as u16, wy as u16)).unwrap();
