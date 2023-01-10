@@ -1,27 +1,35 @@
 # How to Run
 
 ```
-Usage: maze_solver.exe [OPTIONS] <ROWS> <COLUMNS>                                                                                               
-                                                                                                                                                
-Arguments:                                                                                                                                      
-  <ROWS>     Number of rows to draw                                                                                                             
-  <COLUMNS>  Number of columns to draw                                                                                                          
-                                                                                                                                                
-Options:                                                                                                                                        
-  -g, --generator <GENERATOR>  Generator used [default: depth_first_search] [possible values: depth_first_search, breadth_first_search, kruskal]
-  -d, --delay <DELAY>          Number of milliseconds between animation [default: 25]                                                           
-  -h, --help                   Print help information                                                                                           
+Usage: maze_solver.exe [OPTIONS] <ROWS> <COLUMNS>                                                                                                  
+                                                                                                                                                   
+Arguments:                                                                                                                                         
+  <ROWS>     Number of rows to draw                                                                                                                
+  <COLUMNS>  Number of columns to draw                                                                                                             
+                                                                                                                                                   
+Options:                                                                                                                                           
+  -g, --generator <GENERATOR>  Generator used [default: depth_first_search] [possible values: depth_first_search, breadth_first_search, kruskal]   
+  -s, --solver <SOLVER>        Solver used. If one is selected, then the generator will run with a delay of 0 [possible values: depth_first_search]
+  -t, --trace                  Flag to enable drawing visited cells                                                                                
+  -d, --delay <DELAY>          Number of milliseconds between animation [default: 25]                                                              
+  -h, --help                   Print help information
   -V, --version                Print version information
 ```
 
 Here are some examples:
 
 ```
-# Generate 16 by 48 maze using the depth first seach generator and the default delay of 25ms.
+# Animate generating a 16 by 48 maze using the depth-first seach generator.
 cargo run --release -- 16 48 -g depth_first_search
 
-# Generate 16 by 48 maze using the depth first seach generator and a delay of 0ms (instant).
+# Animate generating a 16 by 48 maze using the depth-first seach generator and a delay of 0ms (instant).
 cargo run --release -- 16 48 -g depth_first_search -d 0
+
+# Animate solving a 16 by 48 kruskal maze using the depth-first search solver.
+cargo run --release -- 16 48 -g kruskal -s depth_first_search
+
+# Animate solving a 16 by 48 kruskal maze with trace using the depth-first search solver.
+cargo run --release -- 16 48 -g kruskal -s depth_first_search -t
 ```
 
 I tested that this works on at least Windows 10, Ubuntu and macOS.
@@ -42,6 +50,14 @@ The following generators are included:
 <details><summary>Kruskal's algorithm.</summary>
 
 ![](examples/kruskal.gif)
+</details>
+
+# Solvers
+
+The following solvers are included:
+<details><summary>Depth-first search</summary>
+
+![](examples/dfs_solver.gif)
 </details>
 
 # Note on Design

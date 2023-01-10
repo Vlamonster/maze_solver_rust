@@ -92,6 +92,10 @@ impl Maze {
     pub fn set_wall(&mut self, column: usize, row: usize, cell: Wall) {
         self.frame[row][column] = cell;
     }
+
+    pub fn get_end(&self) -> (usize, usize) {
+        (self.columns - 1, self.rows - 1)
+    }
 }
 
 /// Returns frame for a walled maze with openings in the corners.
