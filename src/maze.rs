@@ -20,10 +20,10 @@ pub enum Wall {
 
 impl Wall {
     /// Prints wall at current cursor position.
-    pub fn print(&self, stdout: &mut Stdout) {
+    pub fn print(self, stdout: &mut Stdout) {
         match self {
             Wall::Horizontal(char) => stdout
-                .execute(Print(format!("{}{}{}", Underlined, char, NoUnderline)))
+                .execute(Print(format!("{Underlined}{char}{NoUnderline}")))
                 .unwrap(),
             Wall::Vertical => stdout.execute(Print('│')).unwrap(),
             Wall::None(char) => stdout.execute(Print(char)).unwrap(),
@@ -31,13 +31,13 @@ impl Wall {
     }
 
     /// Prints wall at current cursor position with the given character. Panics if Wall is Vertical.
-    pub fn print_with_char(&self, stdout: &mut Stdout, char: char) {
+    pub fn print_with_char(self, stdout: &mut Stdout, char: char) {
         match self {
             Wall::Horizontal(_) => stdout
-                .execute(Print(format!("{}{}{}", Underlined, char, NoUnderline)))
+                .execute(Print(format!("{Underlined}{char}{NoUnderline}")))
                 .unwrap(),
             Wall::None(_) => stdout.execute(Print(char)).unwrap(),
-            _ => unreachable!(),
+            Wall::Vertical => unreachable!(),
         };
     }
 }

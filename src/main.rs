@@ -42,6 +42,9 @@ fn main() {
         ("breadth_first_search", delay) => {
             breadth_first_search::generate(&mut stdout, args.rows, args.columns, delay);
         }
+        ("kruskal", 0) => {
+            kruskal::generate_instant(&mut stdout, args.rows, args.columns);
+        }
         ("kruskal", delay) => {
             kruskal::generate(&mut stdout, args.rows, args.columns, delay);
         }

@@ -22,80 +22,75 @@ use std::time::Duration;
 /// }
 /// ```
 pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Maze {
+    // Create a new walled maze of the specified dimensions.
     let mut maze = Maze::new_walled(rows, columns);
 
+    // Draw the initial maze in the terminal.
     maze.print(stdout);
 
-    // Initialize breadth first search.
+    // Initialize variables for breadth first search algorithm.
     let mut visited = HashSet::new();
     let mut unvisited = Vec::new();
     unvisited.push((0, 0));
 
-    // Directions to try for neighbors.
+    // Directions to try for neighbors and rng to randomize it.
     let mut offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)];
     let mut rng = rand::thread_rng();
 
-    // Loop while we have unvisited nodes.
+    // Main loop to iterate through the stack.
     'top: while let Some(&(x, y)) = unvisited.last() {
         sleep(Duration::from_millis(delay));
-
-        // Set current node as visited.
         visited.insert((x, y));
 
-        // Calculate cell indices.
+        // Calculate the frame indices of the current cell.
         let (cx, cy) = (2 * x + 1, y + 1);
 
-        // Remove center dot.
+        // Redraw the current cell, removing previously overwritten characters.
         stdout.queue(MoveTo(cx as u16, cy as u16)).unwrap();
         maze.get_wall(cx, cy).print(stdout);
 
         // Randomize order of directions to try.
         offsets.shuffle(&mut rng);
-
-        // Check per neighbor if we have visited it.
         for (dx, dy) in offsets {
             let (nx, ny) = ((x as isize + dx) as usize, (y as isize + dy) as usize);
 
-            // Check that we are still in bounds.
+            // Skip out of bounds coordinates.
             if !(0..columns).contains(&nx) || !(0..rows).contains(&ny) {
                 continue;
             }
 
-            // Check if we have already seen this node before.
+            // Skip if current neighbor has been visited.
             if visited.contains(&(nx, ny)) || unvisited.contains(&(nx, ny)) {
                 continue;
             }
 
-            // Push new node to top of stack.
             unvisited.push((nx, ny));
 
-            // Set cursor to wall between current node and neighbor.
+            // Update wall between current and next cell.
             let wx = x + nx + 1;
             let wy = if dy == -1 { ny } else { y } + 1;
             stdout.queue(MoveTo(wx as u16, wy as u16)).unwrap();
 
-            // Check if we moved horizontally.
-            if dx != 0 {
-                Wall::Horizontal(' ').print(stdout);
-                maze.set_wall(wx, wy, Wall::Horizontal(' '))
-            } else {
+            if dx == 0 {
                 Wall::None(' ').print(stdout);
-                maze.set_wall(wx, wy, Wall::None(' '))
+                maze.set_wall(wx, wy, Wall::None(' '));
+            } else {
+                Wall::Horizontal(' ').print(stdout);
+                maze.set_wall(wx, wy, Wall::Horizontal(' '));
             }
 
-            // Calculate cell indices.
+            // Calculate the frame indices of the neighboring cell.
             let (cx, cy) = (2 * nx + 1, ny + 1);
 
-            // Draw center dot.
+            // Print central dot in neighboring cell.
             stdout.queue(MoveTo(cx as u16, cy as u16)).unwrap();
             maze.get_wall(cx, cy).print_with_char(stdout, '·');
 
-            // Randomize order of unvisited nodes and continue with the new top node.
             unvisited.shuffle(&mut rng);
             continue 'top;
         }
 
-        // No more neighbors to visit at this node, so pop it.
+        // No more neighbors to visit at this cell, so pop it.
         unvisited.pop();
     }
 
@@ -105,65 +100,60 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
     maze
 }
 
-/// Generates and draws a maze in the terminal using a randomized breadth-first search.
-/// *Only* draws at the end of generation.
+/// Stripped version of `generate()` that *only* draws at the end of generation.
 pub fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
+    // Create a new walled maze of the specified dimensions.
     let mut maze = Maze::new_walled(rows, columns);
 
-    // Initialize breadth first search.
+    // Initialize variables for breadth first search algorithm.
     let mut visited = HashSet::new();
     let mut unvisited = Vec::new();
     unvisited.push((0, 0));
 
-    // Directions to try for neighbors.
+    // Directions to try for neighbors and rng to randomize it.
     let mut offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)];
     let mut rng = rand::thread_rng();
 
-    // Loop while we have unvisited nodes.
+    // Main loop to iterate through the stack.
     'top: while let Some(&(x, y)) = unvisited.last() {
-        // Set current node as visited.
         visited.insert((x, y));
 
         // Randomize order of directions to try.
         offsets.shuffle(&mut rng);
-
-        // Check per neighbor if we have visited it.
         for (dx, dy) in offsets {
             let (nx, ny) = ((x as isize + dx) as usize, (y as isize + dy) as usize);
 
-            // Check that we are still in bounds.
+            // Skip out of bounds coordinates.
             if !(0..columns).contains(&nx) || !(0..rows).contains(&ny) {
                 continue;
             }
 
-            // Check if we have already seen this node before.
+            // Skip if current neighbor has been visited.
             if visited.contains(&(nx, ny)) || unvisited.contains(&(nx, ny)) {
                 continue;
             }
 
-            // Push new node to top of stack.
             unvisited.push((nx, ny));
 
-            // Set cursor to wall between current node and neighbor.
+            // Update wall between current and next cell.
             let wx = x + nx + 1;
             let wy = if dy == -1 { ny } else { y } + 1;
 
-            // Check if we moved horizontally.
-            if dx != 0 {
-                maze.set_wall(wx, wy, Wall::Horizontal(' '))
+            if dx == 0 {
+                maze.set_wall(wx, wy, Wall::None(' '));
             } else {
-                maze.set_wall(wx, wy, Wall::None(' '))
+                maze.set_wall(wx, wy, Wall::Horizontal(' '));
             }
 
-            // Randomize order of unvisited nodes and continue with the new top node.
             unvisited.shuffle(&mut rng);
             continue 'top;
         }
 
-        // No more neighbors to visit at this node, so pop it.
+        // No more neighbors to visit at this cell, so pop it.
         unvisited.pop();
     }
 
+    // Draw the generated maze in the terminal.
     maze.print(stdout);
 
     // Set cursor after the maze.
