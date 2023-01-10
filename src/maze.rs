@@ -3,7 +3,10 @@ use crossterm::style::Attribute::{NoUnderline, Underlined};
 use crossterm::style::Print;
 use crossterm::terminal::{Clear, ClearType};
 use crossterm::{ExecutableCommand, QueueableCommand};
-use std::io::{Stdout, Write};
+use itertools::Itertools;
+use std::fs::File;
+use std::io::{Read, Stdout, Write};
+use std::path::PathBuf;
 
 /// Walls come in three types:
 /// * Horizontal (H)
@@ -64,6 +67,11 @@ impl Maze {
             columns,
             frame: walled_maze(rows, columns),
         }
+    }
+
+    /// Parses maze from path.
+    pub fn from_path(path: PathBuf) -> Maze {
+        parse_maze(path)
     }
 
     /// Clears the terminal and prints the frame of the maze to the terminal.
@@ -128,4 +136,36 @@ fn walled_maze(rows: usize, columns: usize) -> Vec<Vec<Wall>> {
     buffer[rows][columns * 2 - 1] = Wall::None(' '); // (rows, columns * 2 - 1) is lower right cell
 
     buffer
+}
+
+/// Parses maze from path. Files should be stored as follows:
+/// * Horizontal = '_' (underscore)
+/// * Vertical = '|' (pipe)
+/// * None = ' ' (space)
+fn parse_maze(path: PathBuf) -> Maze {
+    let mut buffer = String::new();
+    File::open(path)
+        .unwrap()
+        .read_to_string(&mut buffer)
+        .unwrap();
+
+    let frame = buffer
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|wall| match wall {
+                    '_' => Wall::Horizontal(' '),
+                    '|' => Wall::Vertical,
+                    ' ' => Wall::None(' '),
+                    x => panic!("Bad character in file: {x}!"),
+                })
+                .collect_vec()
+        })
+        .collect_vec();
+
+    Maze {
+        rows: frame.len() - 1,
+        columns: (frame[0].len() - 1) / 2,
+        frame,
+    }
 }

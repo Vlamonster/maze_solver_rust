@@ -1,17 +1,18 @@
 # How to Run
 
 ```
-Usage: maze_solver.exe [OPTIONS] <ROWS> <COLUMNS>                                                                                                  
-                                                                                                                                                   
-Arguments:                                                                                                                                         
-  <ROWS>     Number of rows to draw                                                                                                                
-  <COLUMNS>  Number of columns to draw                                                                                                             
-                                                                                                                                                   
-Options:                                                                                                                                           
-  -g, --generator <GENERATOR>  Generator used [default: depth_first_search] [possible values: depth_first_search, breadth_first_search, kruskal]   
-  -s, --solver <SOLVER>        Solver used. If one is selected, then the generator will run with a delay of 0 [possible values: depth_first_search]
-  -t, --trace                  Flag to enable drawing visited cells                                                                                
-  -d, --delay <DELAY>          Number of milliseconds between animation [default: 25]                                                              
+Usage: maze_solver.exe [OPTIONS] [ROWS] [COLUMNS]
+
+Arguments:
+  [ROWS]     Number of rows to draw [default: 16]
+  [COLUMNS]  Number of columns to draw [default: 48]
+
+Options:
+  -g, --generator <GENERATOR>  Generator used [default: depth_first_search] [possible values: depth_first_search, breadth_first_search, kruskal]
+  -i, --input <INPUT>          Input path used. If None, then the generator will be used
+  -s, --solver <SOLVER>        Solver used. If Some, then the generator will run with a delay of 0 [possible values: depth_first_search]
+  -t, --trace                  Flag to enable drawing visited cells
+  -d, --delay <DELAY>          Number of milliseconds between animation [default: 25]
   -h, --help                   Print help information
   -V, --version                Print version information
 ```
@@ -19,17 +20,20 @@ Options:
 Here are some examples:
 
 ```
-# Animate generating a 16 by 48 maze using the depth-first seach generator.
-cargo run --release -- 16 48 -g depth_first_search
+# Animate generating a 10 by 12 maze using the depth-first seach generator.
+cargo run --release -- 10 12 -g depth_first_search
 
 # Animate generating a 16 by 48 maze using the depth-first seach generator and a delay of 0ms (instant).
-cargo run --release -- 16 48 -g depth_first_search -d 0
+cargo run --release -- -g depth_first_search -d 0
 
 # Animate solving a 16 by 48 kruskal maze using the depth-first search solver.
-cargo run --release -- 16 48 -g kruskal -s depth_first_search
+cargo run --release -- -g kruskal -s depth_first_search
 
 # Animate solving a 16 by 48 kruskal maze with trace using the depth-first search solver.
-cargo run --release -- 16 48 -g kruskal -s depth_first_search -t
+cargo run --release -- -g kruskal -s depth_first_search -t
+
+# Animate solving the medium sized example using the depth-first search solver.
+cargo run --release -- -i examples/medium.maze -s depth_first_search
 ```
 
 I tested that this works on at least Windows 10, Ubuntu and macOS.
