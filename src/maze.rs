@@ -156,6 +156,10 @@ enum ParsingError {
     EvenNumberOfColumns,
     #[error("Varying character row length for row {0}.")]
     VaryingRowLengths(usize),
+    #[error("Number of rows exceeds u16::MAX (65535).")]
+    TooManyRows,
+    #[error("Number of columns exceeds u16::MAX (65535).")]
+    TooManyColumns,
 }
 
 /// Parses maze from path. Files should be stored as follows:
@@ -166,14 +170,15 @@ fn parse_maze(path: PathBuf) -> Result<Maze> {
     let mut buffer = String::new();
     File::open(path)?.read_to_string(&mut buffer)?;
 
-    let height = u16::try_from(buffer.lines().count())?;
+    let height = u16::try_from(buffer.lines().count()).or(Err(ParsingError::TooManyRows))?;
     let width = u16::try_from(
         buffer
             .lines()
             .next()
             .ok_or(ParsingError::NotEnoughRows)?
             .len(),
-    )?;
+    )
+    .or(Err(ParsingError::TooManyColumns))?;
 
     match (width, height) {
         (_, 0..=1) => bail!(ParsingError::NotEnoughRows),
