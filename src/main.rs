@@ -3,6 +3,7 @@ mod maze;
 mod solver;
 
 use crate::maze::Maze;
+use anyhow::Result;
 use clap::{ArgGroup, Parser};
 use crossterm::cursor::Show;
 use crossterm::ExecutableCommand;
@@ -42,7 +43,7 @@ struct Args {
     delay: u64,
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args = Args::parse();
     let mut stdout = stdout();
 
@@ -50,28 +51,30 @@ fn main() {
 
     let mut maze = match (args.input.as_deref(), args.generator.as_deref()) {
         (Some(path), _) => {
-            let maze = Maze::from_path(PathBuf::from(path));
-            maze.print(&mut stdout);
+            let maze = Maze::from_path(PathBuf::from(path))?;
+            maze.print(&mut stdout)?;
             maze
         }
         (_, Some("depth_first_search")) => {
-            generator::depth_first_search::generate(&mut stdout, args.rows, args.columns, delay)
+            generator::depth_first_search::generate(&mut stdout, args.rows, args.columns, delay)?
         }
         (_, Some("breadth_first_search")) => {
-            generator::breadth_first_search::generate(&mut stdout, args.rows, args.columns, delay)
+            generator::breadth_first_search::generate(&mut stdout, args.rows, args.columns, delay)?
         }
         (_, Some("kruskal")) => {
-            generator::kruskal::generate(&mut stdout, args.rows, args.columns, delay)
+            generator::kruskal::generate(&mut stdout, args.rows, args.columns, delay)?
         }
         _ => unreachable!(),
     };
 
     match args.solver.as_deref() {
         Some("depth_first_search") => {
-            solver::depth_first_search::solve(&mut stdout, &mut maze, args.delay, args.trace)
+            solver::depth_first_search::solve(&mut stdout, &mut maze, args.delay, args.trace)?;
         }
         _ => {}
-    }
+    };
 
-    stdout.execute(Show).unwrap();
+    stdout.execute(Show)?;
+
+    Ok(())
 }

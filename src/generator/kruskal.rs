@@ -1,4 +1,5 @@
 use crate::maze::{Maze, Wall};
+use anyhow::Result;
 use crossterm::cursor::MoveTo;
 use crossterm::QueueableCommand;
 use disjoint_sets::UnionFind;
@@ -8,14 +9,14 @@ use spin_sleep::sleep;
 use std::io::Stdout;
 use std::time::Duration;
 
-pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Maze {
+pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Result<Maze> {
     if delay == 0 {
         return generate_instant(stdout, rows, columns);
     }
 
     let mut maze = Maze::new_walled(rows, columns);
 
-    maze.print(stdout);
+    maze.print(stdout)?;
 
     // Initialize kruskal algorithm.
     let mut cells = UnionFind::new(columns * rows);
@@ -55,14 +56,14 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
         cells.union(id1, id2);
 
         // Set cursor to wall and open it.
-        stdout.queue(MoveTo(wx as u16, wy as u16)).unwrap();
+        stdout.queue(MoveTo(wx as u16, wy as u16))?;
         match wall {
             Wall::Horizontal(_) => {
-                Wall::None(' ').print(stdout);
+                Wall::None(' ').print(stdout)?;
                 maze.set_wall(wx, wy, Wall::None(' '));
             }
             Wall::Vertical => {
-                Wall::Horizontal(' ').print(stdout);
+                Wall::Horizontal(' ').print(stdout)?;
                 maze.set_wall(wx, wy, Wall::Horizontal(' '));
             }
             Wall::None(_) => unreachable!(),
@@ -70,13 +71,13 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
     }
 
     // Set cursor after the maze.
-    stdout.queue(MoveTo(0, rows as u16 + 1)).unwrap();
+    stdout.queue(MoveTo(0, rows as u16 + 1))?;
 
-    maze
+    Ok(maze)
 }
 
 /// Stripped version of `generate()` that *only* draws at the end of generation.
-fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
+fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Result<Maze> {
     let mut maze = Maze::new_walled(rows, columns);
 
     // Initialize kruskal algorithm.
@@ -124,10 +125,10 @@ fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
     }
 
     // Draw the generated maze in the terminal.
-    maze.print(stdout);
+    maze.print(stdout)?;
 
     // Set cursor after the maze.
-    stdout.queue(MoveTo(0, rows as u16 + 1)).unwrap();
+    stdout.queue(MoveTo(0, rows as u16 + 1))?;
 
-    maze
+    Ok(maze)
 }

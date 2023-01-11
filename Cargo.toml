@@ -12,3 +12,4 @@ clap = { version = "4.0.32", features = ["derive"] }
 spin_sleep = "1.1.1"
 itertools = "0.10.5"
 disjoint-sets = "0.4.2"
+anyhow = "1.0.68"

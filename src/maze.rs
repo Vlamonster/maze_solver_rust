@@ -1,3 +1,4 @@
+use anyhow::Result;
 use crossterm::cursor::{Hide, MoveTo};
 use crossterm::style::Attribute::{NoUnderline, Underlined};
 use crossterm::style::Print;
@@ -23,25 +24,27 @@ pub enum Wall {
 
 impl Wall {
     /// Prints wall at current cursor position.
-    pub fn print(self, stdout: &mut Stdout) {
+    pub fn print(self, stdout: &mut Stdout) -> Result<()> {
         match self {
-            Wall::Horizontal(char) => stdout
-                .execute(Print(format!("{Underlined}{char}{NoUnderline}")))
-                .unwrap(),
-            Wall::Vertical => stdout.execute(Print('│')).unwrap(),
-            Wall::None(char) => stdout.execute(Print(char)).unwrap(),
+            Wall::Horizontal(char) => {
+                stdout.execute(Print(format!("{Underlined}{char}{NoUnderline}")))?
+            }
+            Wall::Vertical => stdout.execute(Print('│'))?,
+            Wall::None(char) => stdout.execute(Print(char))?,
         };
+        Ok(())
     }
 
     /// Prints wall at current cursor position with the given character. Panics if Wall is Vertical.
-    pub fn print_with_char(self, stdout: &mut Stdout, char: char) {
+    pub fn print_with_char(self, stdout: &mut Stdout, char: char) -> Result<()> {
         match self {
-            Wall::Horizontal(_) => stdout
-                .execute(Print(format!("{Underlined}{char}{NoUnderline}")))
-                .unwrap(),
-            Wall::None(_) => stdout.execute(Print(char)).unwrap(),
+            Wall::Horizontal(_) => {
+                stdout.execute(Print(format!("{Underlined}{char}{NoUnderline}")))?
+            }
+            Wall::None(_) => stdout.execute(Print(char))?,
             Wall::Vertical => unreachable!(),
         };
+        Ok(())
     }
 }
 
@@ -70,25 +73,27 @@ impl Maze {
     }
 
     /// Parses maze from path.
-    pub fn from_path(path: PathBuf) -> Maze {
+    pub fn from_path(path: PathBuf) -> Result<Maze> {
         parse_maze(path)
     }
 
     /// Clears the terminal and prints the frame of the maze to the terminal.
-    pub fn print(&self, stdout: &mut Stdout) {
-        stdout.queue(Hide).unwrap();
-        stdout.queue(MoveTo(0, 0)).unwrap();
-        stdout.queue(Clear(ClearType::All)).unwrap();
+    pub fn print(&self, stdout: &mut Stdout) -> Result<()> {
+        stdout.queue(Hide)?;
+        stdout.queue(MoveTo(0, 0))?;
+        stdout.queue(Clear(ClearType::All))?;
 
         for row in &self.frame {
             for &wall in row {
-                wall.print(stdout);
+                wall.print(stdout)?;
             }
-            stdout.queue(Print('\n')).unwrap();
+            stdout.queue(Print('\n'))?;
         }
 
         // Flush to make sure the frame is drawn.
-        stdout.flush().unwrap();
+        stdout.flush()?;
+
+        Ok(())
     }
 
     /// Returns wall from frame coordinates.
@@ -142,12 +147,9 @@ fn walled_maze(rows: usize, columns: usize) -> Vec<Vec<Wall>> {
 /// * Horizontal = '_' (underscore)
 /// * Vertical = '|' (pipe)
 /// * None = ' ' (space)
-fn parse_maze(path: PathBuf) -> Maze {
+fn parse_maze(path: PathBuf) -> Result<Maze> {
     let mut buffer = String::new();
-    File::open(path)
-        .unwrap()
-        .read_to_string(&mut buffer)
-        .unwrap();
+    File::open(path)?.read_to_string(&mut buffer)?;
 
     let frame = buffer
         .lines()
@@ -163,9 +165,9 @@ fn parse_maze(path: PathBuf) -> Maze {
         })
         .collect_vec();
 
-    Maze {
+    Ok(Maze {
         rows: frame.len() - 1,
         columns: (frame[0].len() - 1) / 2,
         frame,
-    }
+    })
 }

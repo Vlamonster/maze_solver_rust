@@ -1,4 +1,5 @@
 use crate::maze::{Maze, Wall};
+use anyhow::Result;
 use crossterm::cursor::MoveTo;
 use crossterm::QueueableCommand;
 use rand::seq::SliceRandom;
@@ -20,7 +21,7 @@ use std::time::Duration;
 ///     }
 /// }
 /// ```
-pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Maze {
+pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Result<Maze> {
     if delay == 0 {
         return generate_instant(stdout, rows, columns);
     }
@@ -29,7 +30,7 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
     let mut maze = Maze::new_walled(rows, columns);
 
     // Draw the initial maze in the terminal.
-    maze.print(stdout);
+    maze.print(stdout)?;
 
     // Initialize variables for depth first search algorithm.
     let mut visited = HashSet::new();
@@ -68,28 +69,28 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
             // Update wall between current and next cell.
             let wx = x + nx + 1;
             let wy = if dy == -1 { ny } else { y } + 1;
-            stdout.queue(MoveTo(wx as u16, wy as u16)).unwrap();
+            stdout.queue(MoveTo(wx as u16, wy as u16))?;
 
             if dx == 0 {
-                Wall::None(' ').print(stdout);
+                Wall::None(' ').print(stdout)?;
                 maze.set_wall(wx, wy, Wall::None(' '));
             } else {
-                Wall::Horizontal(' ').print(stdout);
+                Wall::Horizontal(' ').print(stdout)?;
                 maze.set_wall(wx, wy, Wall::Horizontal(' '));
             }
 
             // Print arrow pointing to neighbor in current cell.
             #[rustfmt::skip]
-            let dir = match (dx, dy) {
-                ( 1,  _) => '→',
-                (-1,  _) => '←',
-                ( _,  1) => '↓',
-                ( _, -1) => '↑',
-                ( _,  _) => unreachable!(),
+                let dir = match (dx, dy) {
+                (1, _) => '→',
+                (-1, _) => '←',
+                (_, 1) => '↓',
+                (_, -1) => '↑',
+                (_, _) => unreachable!(),
             };
 
-            stdout.queue(MoveTo(cx as u16, cy as u16)).unwrap();
-            maze.get_wall(cx, cy).print_with_char(stdout, dir);
+            stdout.queue(MoveTo(cx as u16, cy as u16))?;
+            maze.get_wall(cx, cy).print_with_char(stdout, dir)?;
 
             continue 'top;
         }
@@ -98,18 +99,18 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
         unvisited.pop();
 
         // Redraw the current cell, removing previously overwritten characters.
-        stdout.queue(MoveTo(cx as u16, cy as u16)).unwrap();
-        maze.get_wall(cx, cy).print(stdout);
+        stdout.queue(MoveTo(cx as u16, cy as u16))?;
+        maze.get_wall(cx, cy).print(stdout)?;
     }
 
     // Set cursor after the maze.
-    stdout.queue(MoveTo(0, rows as u16 + 1)).unwrap();
+    stdout.queue(MoveTo(0, rows as u16 + 1))?;
 
-    maze
+    Ok(maze)
 }
 
 /// Stripped version of `generate()` that *only* draws at the end of generation.
-fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
+fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Result<Maze> {
     // Create a new walled maze of the specified dimensions.
     let mut maze = Maze::new_walled(rows, columns);
 
@@ -161,10 +162,10 @@ fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
     }
 
     // Draw the generated maze in the terminal.
-    maze.print(stdout);
+    maze.print(stdout)?;
 
     // Set cursor after the maze.
-    stdout.queue(MoveTo(0, rows as u16 + 1)).unwrap();
+    stdout.queue(MoveTo(0, rows as u16 + 1))?;
 
-    maze
+    Ok(maze)
 }
