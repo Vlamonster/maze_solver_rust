@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use crossterm::cursor::{Hide, MoveTo};
 use crossterm::style::Attribute::{NoUnderline, Underlined};
 use crossterm::style::Print;
@@ -8,6 +8,7 @@ use itertools::Itertools;
 use std::fs::File;
 use std::io::{Read, Stdout, Write};
 use std::path::PathBuf;
+use thiserror::Error;
 
 /// Walls come in three types:
 /// * Horizontal (H)
@@ -143,6 +144,20 @@ fn walled_maze(rows: usize, columns: usize) -> Vec<Vec<Wall>> {
     buffer
 }
 
+#[derive(Error, Debug)]
+enum ParsingError {
+    #[error("Bad character '{2}' found at {0}:{1}.")]
+    BadCharacter(usize, usize, char),
+    #[error("There are not enough character rows.")]
+    NotEnoughRows,
+    #[error("There are not enough character columns.")]
+    NotEnoughColumns,
+    #[error("There are an even number of character columns.")]
+    EvenNumberOfColumns,
+    #[error("Varying character row length for row {0}.")]
+    VaryingRowLengths(usize),
+}
+
 /// Parses maze from path. Files should be stored as follows:
 /// * Horizontal = '_' (underscore)
 /// * Vertical = '|' (pipe)
@@ -151,23 +166,43 @@ fn parse_maze(path: PathBuf) -> Result<Maze> {
     let mut buffer = String::new();
     File::open(path)?.read_to_string(&mut buffer)?;
 
-    let frame = buffer
+    let height = buffer.lines().count();
+    let width = buffer
         .lines()
-        .map(|line| {
-            line.chars()
-                .map(|wall| match wall {
-                    '_' => Wall::Horizontal(' '),
-                    '|' => Wall::Vertical,
-                    ' ' => Wall::None(' '),
-                    x => panic!("Bad character in file: {x}!"),
-                })
-                .collect_vec()
+        .next()
+        .ok_or(ParsingError::NotEnoughRows)?
+        .len();
+
+    match (width, height) {
+        (_, 0..=1) => bail!(ParsingError::NotEnoughRows),
+        (0..=2, _) => bail!(ParsingError::NotEnoughColumns),
+        (w, _) if w % 2 == 0 => bail!(ParsingError::EvenNumberOfColumns),
+        (_, _) => {}
+    }
+
+    let frame: Vec<Vec<Wall>> = buffer
+        .lines()
+        .enumerate()
+        .map(|(row, line)| {
+            if line.len() == width {
+                line.chars()
+                    .enumerate()
+                    .map(|(column, char)| match char {
+                        '_' => Ok(Wall::Horizontal(' ')),
+                        '|' => Ok(Wall::Vertical),
+                        ' ' => Ok(Wall::None(' ')),
+                        c => Err(ParsingError::BadCharacter(row + 1, column + 1, c)),
+                    })
+                    .collect()
+            } else {
+                Err(ParsingError::VaryingRowLengths(row + 1))
+            }
         })
-        .collect_vec();
+        .try_collect()?;
 
     Ok(Maze {
-        rows: frame.len() - 1,
-        columns: (frame[0].len() - 1) / 2,
+        rows: height - 1,
+        columns: (width - 1) / 2,
         frame,
     })
 }
