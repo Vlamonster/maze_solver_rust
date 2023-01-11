@@ -66,13 +66,11 @@ fn main() {
         _ => unreachable!(),
     };
 
-    if let Some(solver) = args.solver {
-        match solver.as_str() {
-            "depth_first_search" => {
-                solver::depth_first_search::solve(&mut stdout, &mut maze, args.delay, args.trace)
-            }
-            _ => unreachable!(),
+    match args.solver.as_deref() {
+        Some("depth_first_search") => {
+            solver::depth_first_search::solve(&mut stdout, &mut maze, args.delay, args.trace)
         }
+        _ => {}
     }
 
     stdout.execute(Show).unwrap();
