@@ -1,15 +1,15 @@
 # How to Run
 
 ```
-Usage: maze_solver.exe [OPTIONS] [ROWS] [COLUMNS]
+Usage: maze_solver.exe [OPTIONS] <--generator <GENERATOR>|--input <INPUT>> [ROWS] [COLUMNS]
 
 Arguments:
   [ROWS]     Number of rows to draw [default: 16]
   [COLUMNS]  Number of columns to draw [default: 48]
 
 Options:
-  -g, --generator <GENERATOR>  Generator used [default: depth_first_search] [possible values: depth_first_search, breadth_first_search, kruskal]
-  -i, --input <INPUT>          Input path used. If None, then the generator will be used
+  -g, --generator <GENERATOR>  Generator used [possible values: depth_first_search, breadth_first_search, kruskal]
+  -i, --input <INPUT>          Input path used
   -s, --solver <SOLVER>        Solver used. If Some, then the generator will run with a delay of 0 [possible values: depth_first_search]
   -t, --trace                  Flag to enable drawing visited cells
   -d, --delay <DELAY>          Number of milliseconds between animation [default: 25]

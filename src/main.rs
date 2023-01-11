@@ -3,7 +3,7 @@ mod maze;
 mod solver;
 
 use crate::maze::Maze;
-use clap::Parser;
+use clap::{ArgGroup, Parser};
 use crossterm::cursor::Show;
 use crossterm::ExecutableCommand;
 use std::io::stdout;
@@ -11,6 +11,7 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
+#[command(group(ArgGroup::new("maze_used").required(true).args(["generator", "input"])))]
 struct Args {
     /// Number of rows to draw.
     #[arg(default_value_t = 16)]
@@ -21,10 +22,10 @@ struct Args {
     columns: usize,
 
     /// Generator used.
-    #[arg(short, long, default_value = "depth_first_search", value_parser = ["depth_first_search", "breadth_first_search", "kruskal"])]
-    generator: String,
+    #[arg(short, long, value_parser = ["depth_first_search", "breadth_first_search", "kruskal"])]
+    generator: Option<String>,
 
-    /// Input path used. If None, then the generator will be used.
+    /// Input path used.
     #[arg(short, long)]
     input: Option<String>,
 
@@ -33,7 +34,7 @@ struct Args {
     solver: Option<String>,
 
     /// Flag to enable drawing visited cells.
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long)]
     trace: bool,
 
     /// Number of milliseconds between animation.
@@ -46,28 +47,20 @@ fn main() {
     let mut stdout = stdout();
 
     let delay = if args.solver.is_some() { 0 } else { args.delay };
-    let mut maze = match (args.input, args.generator.as_str(), delay) {
-        (Some(path), _, _) => {
+
+    let mut maze = match (args.input.as_deref(), args.generator.as_deref()) {
+        (Some(path), _) => {
             let maze = Maze::from_path(PathBuf::from(path));
             maze.print(&mut stdout);
             maze
         }
-        (_, "depth_first_search", 0) => {
-            generator::depth_first_search::generate_instant(&mut stdout, args.rows, args.columns)
-        }
-        (_, "depth_first_search", _) => {
+        (_, Some("depth_first_search")) => {
             generator::depth_first_search::generate(&mut stdout, args.rows, args.columns, delay)
         }
-        (_, "breadth_first_search", 0) => {
-            generator::breadth_first_search::generate_instant(&mut stdout, args.rows, args.columns)
-        }
-        (_, "breadth_first_search", _) => {
+        (_, Some("breadth_first_search")) => {
             generator::breadth_first_search::generate(&mut stdout, args.rows, args.columns, delay)
         }
-        (_, "kruskal", 0) => {
-            generator::kruskal::generate_instant(&mut stdout, args.rows, args.columns)
-        }
-        (_, "kruskal", _) => {
+        (_, Some("kruskal")) => {
             generator::kruskal::generate(&mut stdout, args.rows, args.columns, delay)
         }
         _ => unreachable!(),

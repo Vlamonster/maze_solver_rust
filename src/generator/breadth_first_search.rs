@@ -22,6 +22,10 @@ use std::time::Duration;
 /// }
 /// ```
 pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Maze {
+    if delay == 0 {
+        return generate_instant(stdout, rows, columns);
+    }
+
     // Create a new walled maze of the specified dimensions.
     let mut maze = Maze::new_walled(rows, columns);
 
@@ -101,7 +105,7 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
 }
 
 /// Stripped version of `generate()` that *only* draws at the end of generation.
-pub fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
+fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Maze {
     // Create a new walled maze of the specified dimensions.
     let mut maze = Maze::new_walled(rows, columns);
 
