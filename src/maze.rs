@@ -58,14 +58,14 @@ impl Wall {
 /// ```
 #[allow(unused)]
 pub struct Maze {
-    rows: usize,
-    columns: usize,
+    rows: u16,
+    columns: u16,
     frame: Vec<Vec<Wall>>,
 }
 
 impl Maze {
     /// Returns maze initialized with walls around every cell.
-    pub fn new_walled(rows: usize, columns: usize) -> Maze {
+    pub fn new_walled(rows: u16, columns: u16) -> Maze {
         Maze {
             rows,
             columns,
@@ -98,16 +98,16 @@ impl Maze {
     }
 
     /// Returns wall from frame coordinates.
-    pub fn get_wall(&self, column: usize, row: usize) -> Wall {
-        self.frame[row][column]
+    pub fn get_wall(&self, column: u16, row: u16) -> Wall {
+        self.frame[row as usize][column as usize]
     }
 
     /// Sets wall from frame coordinates.
-    pub fn set_wall(&mut self, column: usize, row: usize, cell: Wall) {
-        self.frame[row][column] = cell;
+    pub fn set_wall(&mut self, column: u16, row: u16, cell: Wall) {
+        self.frame[row as usize][column as usize] = cell;
     }
 
-    pub fn get_end(&self) -> (usize, usize) {
+    pub fn get_end(&self) -> (u16, u16) {
         (self.columns - 1, self.rows - 1)
     }
 }
@@ -120,10 +120,10 @@ impl Maze {
 /// │_│_│_│  [V, H, V, H, V, H, V],
 /// │_│_│ │  [V, H, V, H, V, N, V]]
 /// ```
-fn walled_maze(rows: usize, columns: usize) -> Vec<Vec<Wall>> {
+fn walled_maze(rows: u16, columns: u16) -> Vec<Vec<Wall>> {
     let mut buffer = Vec::new();
 
-    let top_row = vec![Wall::Horizontal(' '); columns * 2 + 1];
+    let top_row = vec![Wall::Horizontal(' '); columns as usize * 2 + 1];
 
     let mut row = vec![Wall::Vertical];
     for _ in 0..columns {
@@ -139,7 +139,7 @@ fn walled_maze(rows: usize, columns: usize) -> Vec<Vec<Wall>> {
 
     // Create openings.
     buffer[0][1] = Wall::None(' ');
-    buffer[rows][columns * 2 - 1] = Wall::None(' '); // (rows, columns * 2 - 1) is lower right cell
+    buffer[rows as usize][columns as usize * 2 - 1] = Wall::None(' '); // (rows, columns * 2 - 1) is lower right cell
 
     buffer
 }
@@ -166,12 +166,14 @@ fn parse_maze(path: PathBuf) -> Result<Maze> {
     let mut buffer = String::new();
     File::open(path)?.read_to_string(&mut buffer)?;
 
-    let height = buffer.lines().count();
-    let width = buffer
-        .lines()
-        .next()
-        .ok_or(ParsingError::NotEnoughRows)?
-        .len();
+    let height = u16::try_from(buffer.lines().count())?;
+    let width = u16::try_from(
+        buffer
+            .lines()
+            .next()
+            .ok_or(ParsingError::NotEnoughRows)?
+            .len(),
+    )?;
 
     match (width, height) {
         (_, 0..=1) => bail!(ParsingError::NotEnoughRows),
@@ -184,7 +186,7 @@ fn parse_maze(path: PathBuf) -> Result<Maze> {
         .lines()
         .enumerate()
         .map(|(row, line)| {
-            if line.len() == width {
+            if line.len() == width as usize {
                 line.chars()
                     .enumerate()
                     .map(|(column, char)| match char {

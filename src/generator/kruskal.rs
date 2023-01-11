@@ -9,7 +9,7 @@ use spin_sleep::sleep;
 use std::io::Stdout;
 use std::time::Duration;
 
-pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Result<Maze> {
+pub fn generate(stdout: &mut Stdout, rows: u16, columns: u16, delay: u64) -> Result<Maze> {
     if delay == 0 {
         return generate_instant(stdout, rows, columns);
     }
@@ -19,7 +19,7 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
     maze.print(stdout)?;
 
     // Initialize kruskal algorithm.
-    let mut cells = UnionFind::new(columns * rows);
+    let mut cells = UnionFind::new(columns as usize * rows as usize);
 
     // Construct vector of all walls and randomize the order.
     let horizontal_walls = (1..2 * columns).step_by(2).cartesian_product(1..rows);
@@ -56,7 +56,7 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
         cells.union(id1, id2);
 
         // Set cursor to wall and open it.
-        stdout.queue(MoveTo(wx as u16, wy as u16))?;
+        stdout.queue(MoveTo(wx, wy))?;
         match wall {
             Wall::Horizontal(_) => {
                 Wall::None(' ').print(stdout)?;
@@ -71,17 +71,17 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
     }
 
     // Set cursor after the maze.
-    stdout.queue(MoveTo(0, rows as u16 + 1))?;
+    stdout.queue(MoveTo(0, rows + 1))?;
 
     Ok(maze)
 }
 
 /// Stripped version of `generate()` that *only* draws at the end of generation.
-fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Result<Maze> {
+fn generate_instant(stdout: &mut Stdout, rows: u16, columns: u16) -> Result<Maze> {
     let mut maze = Maze::new_walled(rows, columns);
 
     // Initialize kruskal algorithm.
-    let mut cells = UnionFind::new(columns * rows);
+    let mut cells = UnionFind::new(columns as usize * rows as usize);
 
     // Construct vector of all walls and randomize the order.
     let horizontal_walls = (1..2 * columns).step_by(2).cartesian_product(1..rows);
@@ -128,7 +128,7 @@ fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Result<
     maze.print(stdout)?;
 
     // Set cursor after the maze.
-    stdout.queue(MoveTo(0, rows as u16 + 1))?;
+    stdout.queue(MoveTo(0, rows + 1))?;
 
     Ok(maze)
 }

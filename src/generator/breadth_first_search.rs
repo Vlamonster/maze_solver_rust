@@ -22,7 +22,7 @@ use std::time::Duration;
 ///     }
 /// }
 /// ```
-pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) -> Result<Maze> {
+pub fn generate(stdout: &mut Stdout, rows: u16, columns: u16, delay: u64) -> Result<Maze> {
     if delay == 0 {
         return generate_instant(stdout, rows, columns);
     }
@@ -34,7 +34,7 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
     maze.print(stdout)?;
 
     // Initialize variables for breadth first search algorithm.
-    let mut visited = HashSet::new();
+    let mut visited = HashSet::<(u16, u16)>::new();
     let mut unvisited = Vec::new();
     unvisited.push((0, 0));
 
@@ -51,13 +51,13 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
         let (cx, cy) = (2 * x + 1, y + 1);
 
         // Redraw the current cell, removing previously overwritten characters.
-        stdout.queue(MoveTo(cx as u16, cy as u16))?;
+        stdout.queue(MoveTo(cx, cy))?;
         maze.get_wall(cx, cy).print(stdout)?;
 
         // Randomize order of directions to try.
         offsets.shuffle(&mut rng);
         for (dx, dy) in offsets {
-            let (nx, ny) = ((x as isize + dx) as usize, (y as isize + dy) as usize);
+            let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
 
             // Skip out of bounds coordinates.
             if !(0..columns).contains(&nx) || !(0..rows).contains(&ny) {
@@ -74,7 +74,7 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
             // Update wall between current and next cell.
             let wx = x + nx + 1;
             let wy = if dy == -1 { ny } else { y } + 1;
-            stdout.queue(MoveTo(wx as u16, wy as u16))?;
+            stdout.queue(MoveTo(wx, wy))?;
 
             if dx == 0 {
                 Wall::None(' ').print(stdout)?;
@@ -88,7 +88,7 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
             let (cx, cy) = (2 * nx + 1, ny + 1);
 
             // Print central dot in neighboring cell.
-            stdout.queue(MoveTo(cx as u16, cy as u16))?;
+            stdout.queue(MoveTo(cx, cy))?;
             maze.get_wall(cx, cy).print_with_char(stdout, '·')?;
 
             unvisited.shuffle(&mut rng);
@@ -100,18 +100,18 @@ pub fn generate(stdout: &mut Stdout, rows: usize, columns: usize, delay: u64) ->
     }
 
     // Set cursor after the maze.
-    stdout.queue(MoveTo(0, rows as u16 + 1))?;
+    stdout.queue(MoveTo(0, rows + 1))?;
 
     Ok(maze)
 }
 
 /// Stripped version of `generate()` that *only* draws at the end of generation.
-fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Result<Maze> {
+fn generate_instant(stdout: &mut Stdout, rows: u16, columns: u16) -> Result<Maze> {
     // Create a new walled maze of the specified dimensions.
     let mut maze = Maze::new_walled(rows, columns);
 
     // Initialize variables for breadth first search algorithm.
-    let mut visited = HashSet::new();
+    let mut visited = HashSet::<(u16, u16)>::new();
     let mut unvisited = Vec::new();
     unvisited.push((0, 0));
 
@@ -126,7 +126,7 @@ fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Result<
         // Randomize order of directions to try.
         offsets.shuffle(&mut rng);
         for (dx, dy) in offsets {
-            let (nx, ny) = ((x as isize + dx) as usize, (y as isize + dy) as usize);
+            let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
 
             // Skip out of bounds coordinates.
             if !(0..columns).contains(&nx) || !(0..rows).contains(&ny) {
@@ -162,7 +162,7 @@ fn generate_instant(stdout: &mut Stdout, rows: usize, columns: usize) -> Result<
     maze.print(stdout)?;
 
     // Set cursor after the maze.
-    stdout.queue(MoveTo(0, rows as u16 + 1))?;
+    stdout.queue(MoveTo(0, rows + 1))?;
 
     Ok(maze)
 }

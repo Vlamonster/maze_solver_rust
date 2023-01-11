@@ -11,7 +11,7 @@ use std::time::Duration;
 pub fn solve(stdout: &mut Stdout, maze: &mut Maze, delay: u64, trace: bool) -> Result<()> {
     let (tx, ty) = maze.get_end();
 
-    let mut visited = HashSet::new();
+    let mut visited = HashSet::<(u16, u16)>::new();
     let mut unvisited = Vec::new();
     unvisited.push((0, 0));
 
@@ -25,7 +25,7 @@ pub fn solve(stdout: &mut Stdout, maze: &mut Maze, delay: u64, trace: bool) -> R
             // Calculate the frame indices of the current cell.
             let (cx, cy) = (2 * x + 1, y + 1);
 
-            stdout.queue(MoveTo(cx as u16, cy as u16))?;
+            stdout.queue(MoveTo(cx, cy))?;
             maze.get_wall(cx, cy).print_with_char(stdout, '·')?;
         }
 
@@ -35,7 +35,7 @@ pub fn solve(stdout: &mut Stdout, maze: &mut Maze, delay: u64, trace: bool) -> R
         }
 
         for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
-            let (nx, ny) = ((x as isize + dx) as usize, (y as isize + dy) as usize);
+            let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
 
             // Skip out of bounds coordinates.
             if !(0..=tx).contains(&nx) || !(0..=ty).contains(&ny) {
@@ -70,27 +70,27 @@ pub fn solve(stdout: &mut Stdout, maze: &mut Maze, delay: u64, trace: bool) -> R
     for (&(x, y), &(nx, ny)) in unvisited.iter().tuple_windows() {
         sleep(Duration::from_millis(delay));
 
-        let (dx, dy) = (nx as isize - x as isize, ny as isize - y as isize);
+        let (dx, dy) = (if nx > x { 1 } else { -1 }, if ny > y { 1 } else { -1 });
 
         // Print arrow pointing to neighbor in current cell.
         #[rustfmt::skip]
-            let dir = match (dx, dy) {
-            (1, _) => '→',
-            (-1, _) => '←',
-            (_, 1) => '↓',
-            (_, -1) => '↑',
-            (_, _) => unreachable!(),
+        let dir = match (dx, dy) {
+            ( 1,  _) => '→',
+            (-1,  _) => '←',
+            ( _,  1) => '↓',
+            ( _, -1) => '↑',
+            ( _,  _) => unreachable!(),
         };
 
         // Calculate the frame indices of the current cell.
         let (cx, cy) = (2 * x + 1, y + 1);
 
-        stdout.queue(MoveTo(cx as u16, cy as u16))?;
+        stdout.queue(MoveTo(cx, cy))?;
         maze.get_wall(cx, cy).print_with_char(stdout, dir)?;
     }
 
     // Set cursor after the maze.
-    stdout.queue(MoveTo(0, ty as u16 + 2))?;
+    stdout.queue(MoveTo(0, ty + 2))?;
 
     Ok(())
 }

@@ -16,11 +16,11 @@ use std::path::PathBuf;
 struct Args {
     /// Number of rows to draw.
     #[arg(default_value_t = 16)]
-    rows: usize,
+    rows: u16,
 
     /// Number of columns to draw.
     #[arg(default_value_t = 48)]
-    columns: usize,
+    columns: u16,
 
     /// Generator used.
     #[arg(short, long, value_parser = ["depth_first_search", "breadth_first_search", "kruskal"])]
@@ -67,6 +67,7 @@ fn main() -> Result<()> {
         _ => unreachable!(),
     };
 
+    #[allow(clippy::single_match)]
     match args.solver.as_deref() {
         Some("depth_first_search") => {
             solver::depth_first_search::solve(&mut stdout, &mut maze, args.delay, args.trace)?;
