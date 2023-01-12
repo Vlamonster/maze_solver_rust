@@ -4,6 +4,7 @@ use crossterm::cursor::MoveTo;
 use crossterm::QueueableCommand;
 use itertools::Itertools;
 use spin_sleep::sleep;
+use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::io::Stdout;
 use std::time::Duration;
@@ -71,16 +72,12 @@ pub fn solve(stdout: &mut Stdout, maze: &mut Maze, delay: u64, trace: bool) -> R
         sleep(Duration::from_millis(delay));
 
         // Print arrow pointing to neighbor in current cell.
-        #[rustfmt::skip]
-        let dir = match (
-            if nx > x { 1 } else if nx < x { -1 } else { 0 },
-            if ny > y { 1 } else if ny < y { -1 } else { 0 },
-        ) {
-            ( 1,  _) => '→',
-            (-1,  _) => '←',
-            ( _,  1) => '↓',
-            ( _, -1) => '↑',
-            ( _,  _) => unreachable!(),
+        let dir = match (nx.cmp(&x), ny.cmp(&y)) {
+            (Ordering::Greater, _) => '→',
+            (Ordering::Less, _) => '←',
+            (_, Ordering::Greater) => '↓',
+            (_, Ordering::Less) => '↑',
+            (_, _) => unreachable!(),
         };
 
         // Calculate the frame indices of the current cell.
