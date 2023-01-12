@@ -10,7 +10,7 @@ Arguments:
 Options:
   -g, --generator <GENERATOR>  Generator used [possible values: depth_first_search, breadth_first_search, kruskal]
   -i, --input <INPUT>          Input path used
-  -s, --solver <SOLVER>        Solver used. If Some, then the generator will run with a delay of 0 [possible values: depth_first_search]
+  -s, --solver <SOLVER>        Solver used. If Some, then the generator will run with a delay of 0 [possible values: depth_first_search, a_star]
   -t, --trace                  Flag to enable drawing visited cells
   -d, --delay <DELAY>          Number of milliseconds between animation [default: 25]
   -h, --help                   Print help information
@@ -63,6 +63,11 @@ The following solvers are included:
 
 ![](examples/dfs_solver.gif)
 </details>
+<details><summary>A*</summary>
+
+No gif yet.
+</details>
+
 
 # Note on Design
 

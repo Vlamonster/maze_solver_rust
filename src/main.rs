@@ -31,7 +31,7 @@ struct Args {
     input: Option<String>,
 
     /// Solver used. If Some, then the generator will run with a delay of 0.
-    #[arg(short, long, value_parser = ["depth_first_search"])]
+    #[arg(short, long, value_parser = ["depth_first_search", "a_star"])]
     solver: Option<String>,
 
     /// Flag to enable drawing visited cells.
@@ -71,6 +71,9 @@ fn main() -> Result<()> {
     match args.solver.as_deref() {
         Some("depth_first_search") => {
             solver::depth_first_search::solve(&mut stdout, &mut maze, args.delay, args.trace)?;
+        }
+        Some("a_star") => {
+            solver::a_star::solve(&mut stdout, &mut maze, args.delay, args.trace)?;
         }
         _ => {}
     };
