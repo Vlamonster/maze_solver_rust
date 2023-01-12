@@ -127,8 +127,5 @@ fn generate_instant(stdout: &mut Stdout, rows: u16, columns: u16) -> Result<Maze
     // Draw the generated maze in the terminal.
     maze.print(stdout)?;
 
-    // Set cursor after the maze.
-    stdout.queue(MoveTo(0, rows + 1))?;
-
     Ok(maze)
 }

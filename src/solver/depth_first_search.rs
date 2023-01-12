@@ -87,8 +87,5 @@ pub fn solve(stdout: &mut Stdout, maze: &mut Maze, delay: u64, trace: bool) -> R
         maze.get_wall(cx, cy).print_with_char(stdout, dir)?;
     }
 
-    // Set cursor after the maze.
-    stdout.queue(MoveTo(0, ty + 2))?;
-
     Ok(())
 }

@@ -5,8 +5,8 @@ mod solver;
 use crate::maze::Maze;
 use anyhow::Result;
 use clap::{ArgGroup, Parser};
-use crossterm::cursor::Show;
-use crossterm::ExecutableCommand;
+use crossterm::cursor::{MoveTo, Show};
+use crossterm::{ExecutableCommand, QueueableCommand};
 use std::io::stdout;
 use std::path::PathBuf;
 
@@ -78,6 +78,8 @@ fn main() -> Result<()> {
         _ => {}
     };
 
+    // Set cursor after the maze and show it again.
+    stdout.queue(MoveTo(0, maze.get_end().1 + 2))?;
     stdout.execute(Show)?;
 
     Ok(())
